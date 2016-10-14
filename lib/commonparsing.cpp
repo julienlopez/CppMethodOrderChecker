@@ -36,12 +36,18 @@ Utils::StringList_t CommonParsing::fuseSplittedLines(const Utils::StringList_t& 
     {
         std::string tmp;
         auto j = i;
-        for(; j < lines.size() && !Utils::endsWith(tmp, ";"); j++)
+        std::size_t times_added = 0;
+        for(; j < lines.size() && !Utils::endsWith(tmp, "; ")
+              && tmp != "{ " && tmp != "} " && (lines[j] != "{" || tmp.empty()); j++)
         {
-            tmp += " " + lines[j];
+            tmp += lines[j] + " ";
+            times_added++;
         }
+        if(tmp.size() > 1)
+            tmp.pop_back();
         res.push_back(tmp);
-        i = j - 1;
+        if(times_added > 1)
+            i = j - 1;
     }
     return res;
 }

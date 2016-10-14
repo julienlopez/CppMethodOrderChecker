@@ -13,6 +13,8 @@ public:
 
     Utils::StringList_t run();
 
+    std::string cleanUpMethodSignature(std::string line) const;
+
 private:
     const std::string m_class_name;
     Utils::StringList_t m_lines;
