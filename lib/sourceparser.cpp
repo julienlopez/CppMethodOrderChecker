@@ -37,6 +37,7 @@ std::string SourceParser::cleanUpMethodSignature(std::string line) const
     if(line.back() == ';') line.pop_back();
     line = removeClassPrefix(std::move(line));
     line = removeInitializationList(std::move(line));
+    line = removeDefault(std::move(line));
     return Utils::trim(line);
 }
 
@@ -52,6 +53,17 @@ std::string SourceParser::removeClassPrefix(std::string line) const
 std::string SourceParser::removeInitializationList(std::string line)
 {
     const auto pos = line.find(":");
-    if(pos != std::string::npos) line = line.substr(0, pos);
+    if(pos != std::string::npos && line[pos + 1] != ':') line = line.substr(0, pos);
     return line;
+}
+
+std::string SourceParser::removeDefault(std::string line)
+{
+    if(Utils::endsWith(line, " default"))
+    {
+        const auto pos = line.find("=");
+        assert(pos != std::string::npos);
+        line = line.substr(0, pos);
+    }
+    return Utils::trim(line);
 }
