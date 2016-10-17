@@ -18,10 +18,16 @@ SourceParser::SourceParser(std::string class_name, Utils::StringList_t lines)
 Utils::StringList_t SourceParser::run()
 {
     std::transform(begin(m_lines), end(m_lines), begin(m_lines), &Utils::trim);
-    m_lines = CommonParsing::fuseSplittedLines(m_lines);
     auto it = std::remove_if(begin(m_lines), end(m_lines),
-                             [this](const std::string& line) { return !Utils::contains(line, m_class_name + "::"); });
+                             [this](const std::string& line) { return Utils::startsWith(line, "#"); });
     m_lines.erase(it, end(m_lines));
+    m_lines = CommonParsing::fuseSplittedLines(m_lines);
+    CommonParsing::removeUselessLines(m_lines);
+    it = std::remove_if(begin(m_lines), end(m_lines),
+                        [this](const std::string& line) { return !Utils::contains(line, m_class_name + "::"); });
+    m_lines.erase(it, end(m_lines));
+    for(auto& line : m_lines)
+        line = cleanUpMethodSignature(std::move(line));
     return m_lines;
 }
 
@@ -29,7 +35,23 @@ std::string SourceParser::cleanUpMethodSignature(std::string line) const
 {
     line = Utils::trim(line);
     if(line.back() == ';') line.pop_back();
-    const auto pos = line.find(m_class_name + "::");
-    //TODO finish
+    line = removeClassPrefix(std::move(line));
+    line = removeInitializationList(std::move(line));
+    return Utils::trim(line);
+}
+
+std::string SourceParser::removeClassPrefix(std::string line) const
+{
+    const auto prefix = m_class_name + "::";
+    const auto pos = line.find(prefix);
+    assert(pos != std::string::npos);
+    line.erase(begin(line) + pos, begin(line) + pos + prefix.size());
+    return line;
+}
+
+std::string SourceParser::removeInitializationList(std::string line)
+{
+    const auto pos = line.find(":");
+    if(pos != std::string::npos) line = line.substr(0, pos);
     return line;
 }
